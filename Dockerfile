@@ -1,20 +1,31 @@
-# Usa una imagen más ligera para la construcción y desarrollo
-FROM node:18-alpine AS dev
+# Usando Node con versión 18 para construir la aplicación Angular
+FROM node:18-alpine AS build
+
+# Instalar Angular CLI
+RUN npm install -g @angular/cli
 
 # Establecer el directorio de trabajo
 WORKDIR /app
 
-# Copiar los archivos de dependencias
+# Copiar los archivos package.json y package-lock.json para instalar dependencias
 COPY package*.json ./
 
-# Instalar todas las dependencias (producción y desarrollo)
+# Instalar npm y construir el proyecto
 RUN npm install
-
-# Copiar el resto del código de la aplicación
 COPY . .
+RUN ng build
 
-# Exponer el puerto 4200 para exponer el puerto de aplicacion
+# Usar nginx como base para el contenedor final
+FROM nginx:alpine
+
+# Copiar la carpeta de construcción al directorio correcto para nginx
+COPY --from=build /app/dist/michigo /usr/share/nginx/html
+
+# Exponer el puerto 4200
 EXPOSE 4200
 
-# Comando para iniciar la aplicacion
-CMD ["npm", "run", "start"]
+# Modificar la configuración de nginx para escuchar en el puerto 4200
+RUN echo "server { listen 4200; root /usr/share/nginx/html; index index.html index.htm; location / { try_files \$uri \$uri/ /index.html; } }" > /etc/nginx/conf.d/default.conf
+
+# Comando para iniciar Nginx
+CMD ["nginx", "-g", "daemon off;"]

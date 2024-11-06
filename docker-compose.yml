@@ -1,0 +1,8 @@
+version: '3.8'
+
+services:
+  michigo-service:
+    image: brandong17/as221s6_t02_michigo:latest
+    container_name: michigo_container
+    ports:
+      - "4200:4200"  # Ajusta los puertos según los expuestos por tu aplicación en la imagen
